@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>GRAMMAR Extension</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                text-align: center;
+                background-color: #f0f0f0;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+            }
+
+            .title {
+                font-size: 3em;
+                font-weight: bold;
+                background-image: linear-gradient(270deg, blue, lime, blue, lime);
+                background-size: 400% 400%;
+                -webkit-background-clip: text;
+                color: transparent;
+                animation: gradient 6s ease-in-out infinite;
+            }
+
+            @keyframes gradient {
+                0% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
+            }
+
+            .author-version {
+                margin-top: 20px;
+                font-size: 1em;
+            }
+
+            .rectangle {
+                margin-top: 30px;
+                padding: 15px;
+                border-radius: 15px;
+                background-color: white;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                width: 40%;
+                text-align: center;
+                max-width: 100%; /* Ограничивает ширину изображения */
+                height: auto; /* Поддерживает соотношение сторон изображения */
+            }
+
+            .container {
+                display: flex;
+                justify-content: space-around;
+                width: 100%;
+            }
+
+            .upload-container {
+                margin-top: 40px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 20px;
+            }
+
+            #fileInput {
+                border: 2px solid #007bff;
+                padding: 10px 15px;
+                border-radius: 5px;
+                outline: none;
+            }
+
+            #uploadButton {
+                background-color: #007bff;
+                color: white;
+                border: none;
+                padding: 10px 15px;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
+
+            #uploadButton:hover {
+                background-color: #0056b3;
+            }
+
+            .rectangle p {
+                color: #333;
+                font-size: 1.2em;
+            }
+            .status-console {
+                width: 100%;
+                background-color: #000;
+                color: #fff;
+                padding: 10px;
+                margin-top: 20px;
+                text-align: center;
+                font-size: 1.2em;
+            }
+        </style>
+    </head>
+    <body>
+        <div>
+            <div class="title">GRAMMAR</div>
+            <div class="author-version">Author: Buhreiev Hleb<br>Version 0.0.1a</div>
+        </div>
+        <div class="status-console">
+            <p>Status: Waiting for file...</p>
+        </div>
+        <div class="upload-container">
+            <input type="file" id="fileInput" accept=".html">
+            <button id="uploadButton">Upload and Check</button>
+        </div>
+        <div class="container">
+            <div class="rectangle">
+                <h2>With Errors</h2>
+                <img src="/static/img/we.png" alt="Text with errors">
+            </div>
+            <div class="rectangle">
+                <h2>Corrected</h2>
+                <img src="/static/img/cc.png" alt="Corrected text">
+            </div>
+        </div>
+        <div id="result"></div>
+
+        <script>
+            function uploadFile() {
+                const fileInput = document.getElementById('fileInput');
+                const file = fileInput.files[0];
+                const formData = new FormData();
+                formData.append("file", file);
+        
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    displayResults(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    displayError(error);
+                });
+            }
+        
+            function displayResults(data) {
+                const resultContainer = document.getElementById('result');
+                resultContainer.innerHTML = ''; // Clear previous results
+        
+                if (data && data.result) {
+                    if (data.result.misspelled_words.length > 0) {
+                        resultContainer.innerHTML = 'Найдены следующие ошибки: <br>' +
+                                                    data.result.misspelled_words.join(', ') + '<br><br>';
+                        resultContainer.innerHTML += 'Исправленный текст: <br>' +
+                                                    data.result.corrected_text;
+                    } else {
+                        resultContainer.innerHTML = 'Ошибок не найдено.';
+                    }
+                } else {
+                    resultContainer.innerHTML = 'Не удалось обработать файл.';
+                }
+            }
+        
+            function displayError(error) {
+                const resultContainer = document.getElementById('result');
+                resultContainer.innerHTML = `Произошла ошибка: ${error}`; // Display the error
+            }
+        
+            document.getElementById('uploadButton').addEventListener('click', uploadFile);
+        </script>
+    </body>
+</html>
+
